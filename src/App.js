@@ -5,8 +5,9 @@ import 'rc-slider/assets/index.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'rc-tooltip/assets/bootstrap.css';
 import Tooltip from 'rc-tooltip';
-  // const createSliderWithTooltip = Slider.createSliderWithTooltip;
 
+const createSliderWithTooltip = Slider.createSliderWithTooltip;
+const Range = createSliderWithTooltip(Slider.Range);
 const Handle = Slider.Handle;
 const handle = (props) => {
   const { value, dragging, index, ...restProps } = props;
@@ -22,7 +23,6 @@ const handle = (props) => {
   );
 };
 
-
 class App extends Component {
   constructor() {
     super();
@@ -31,106 +31,114 @@ class App extends Component {
       maxAmount: 5000,
       minNoOfMonths: 6,
       maxNoOfMonths: 24,
-
       amount: 500,
-
+      interestRate: 0,
+      noOfMonths: 6,
+      monthlyPaymentAmount: 0,
+      currency: 'USD',
+      numPayments: 0,
+      principalAmount: 0
     }
     this.getInterest = this.getInterest.bind(this);
   }
 
-viewToolTipValue(v) {
-  return '${v}';
-}
+  viewToolTipValue(v) {
+    return '${v}';
+  }
 
   componentDidMount() {
-    this.getInterest(this.state.noOfMonths, this.state.amount);
+    this.getInterest(this.state.minNoOfMonths, this.state.amount);
   }
 
   getInterest(numMonths, amount) {
-    
-    fetch('https://ftl-frontend-test.herokuapp.com/interest?amount=560&numMonths=7')
-    .then((result) => {
-      console.log("result", result);
-    }).catch((err) => {
-      console.error(err);
-    });
-    console.log(numMonths, amount);
-    this.setState({ noOfMonths: numMonths, amount: amount });
+    fetch(`https://ftl-frontend-test.herokuapp.com/interest?amount=${amount}&numMonths=${numMonths}`)
+      .then((result => result.json()))
+      .then(data => data)
+      .then(response => {
+        console.log("response", response);
+
+        this.setState({
+          interestRate: response.interestRate,
+          monthlyPaymentAmount: response.monthlyPayment.amount,
+          currency: response.monthlyPayment.currency,
+          numPayments: response.numPayments,
+          principalAmount: response.principal.amount
+        })
+      })
+      .catch(error => console.error(error))
+      this.setState({noOfMonths: numMonths, amount: amount})
   }
 
   render() {
     return (
       <div className="mainview">
-      <div className="container">
+        <div className="container">
 
           <div className="col-md-8 slider marcenter">
-<h4 className=""> Loan Amount <span className="totalamtdis">{this.state.amount} &#36;</span></h4>
-               <Slider 
-            min={this.state.minAmount}
-            max={this.state.maxAmount}
-            defaultValue={this.state.minAmount}
+            <h4 className=""> Loan Amount <span class="totalamtdis">{this.state.amount} &#36;</span></h4>
+            <Slider
+              min={this.state.minAmount}
+              max={this.state.maxAmount}
+              defaultValue={this.state.minAmount}
 
-tipFormatter={value => '${value}%'}
-      
-handle={handle}
-            onAfterChange={(e) => {
-              this.getInterest(this.state.noOfMonths, e);
-            }}
-          >
-          </Slider>
-     
-        </div>
-        <div className="col-md-8  marcenter">
-<h4 className=""> Enter Loan Duration</h4>
-     
+              tipFormatter={value =>'${value}%'}
 
-          <input type="number" className="form-control" 
-          placeholder = {"No of Months"} min={this.state.minNoOfMonths} max={this.state.maxNoOfMonths} 
-          value={this.state.noOfMonths} onChange={(e) => {
-            if (e.target.value >= this.state.minNoOfMonths && this.state.amount >= this.state.minAmount) {
-              this.getInterest(e.target.value, this.state.amount);
-            }
-          }}>
-          </input>
-        </div>
+              handle={handle}
+              onAfterChange={(e) => {
+                this.getInterest(this.state.noOfMonths, e);
+              }}
+            >
+            </Slider>
+
+          </div>
+          <div className="col-md-8  marcenter">
+            <h4 className=""> Enter Loan Duration</h4>
 
 
-<div className="col-md-8 marcenter">
-  <div className="row">
-<div className="col-md-6">
+            <input type="number" className="form-control"
+              placeholder={"No of Months (default 6 months)"} min={this.state.minNoOfMonths} max={this.state.maxNoOfMonths}
+               onChange={(e) => {
+                if (e.target.value >= this.state.minNoOfMonths && this.state.amount >= this.state.minAmount) {
+                  this.getInterest(e.target.value, this.state.amount);
+                }
+              }}>
+            </input>
+          </div>
 
 
-    <h4>
-      Interest Rate
+          <div className="col-md-8 marcenter">
+            <div className="row">
+              <div className="col-md-6">
+
+
+                <h4>
+                  Interest Rate
     </h4>
-    <h2>
-      12 %
+                <h2>
+                  {this.state.interestRate}%
     </h2>
 
-  </div>
-  <div className="col-md-6">
-
-
-    <h4>
-      Monthly Payment
+              </div>
+              <div className="col-md-6">
+                <h4>
+                  Monthly Payment
     </h4>
-    <h2>
-       98 USD
+                <h2>
+                  {this.state.monthlyPaymentAmount} USD
     </h2>
 
-  </div>
-  </div>
-</div>
+              </div>
+              <div className="col-md-6 padtop20" >
+                <h4>
+                  Number Of Payments
+    </h4>
+                <h2>
+                  {this.state.numPayments} No's
+    </h2>
 
-
-
-
-
-
-
-
-
-
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
