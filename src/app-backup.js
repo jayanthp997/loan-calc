@@ -38,6 +38,7 @@ class App extends Component {
     this.getInterest = this.getInterest.bind(this);
   }
 
+
 viewToolTipValue(v) {
   return '${v}';
 }
@@ -47,7 +48,6 @@ viewToolTipValue(v) {
   }
 
   getInterest(numMonths, amount) {
-    
     fetch('https://ftl-frontend-test.herokuapp.com/interest?amount=560&numMonths=7')
     .then((result) => {
       console.log("result", result);
